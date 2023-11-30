@@ -42,3 +42,29 @@ FROM country_avg_temps t1
 JOIN country_avg_temps t2 ON t1.country <> t2.country
 AND ABS(t1.country_avg_temp - t2.country_avg_temp) < 1
 
+/* the earliest and latest year represented in this dataset */
+SELECT min(EXTRACT(Year from dt)), 
+max(EXTRACT(Year from dt)) 
+FROM temperatures_by_country;
+
+/* How many null temperatures exist and its percentage in this dataset */
+SELECT
+    COUNT(*) AS null_count,
+    COUNT(*) * 100.0 / (SELECT COUNT(*) 
+    FROM temperatures_by_country) AS null_percentage
+FROM
+    temperatures_by_country
+WHERE
+    avg_temp IS NULL;
+
+/* How many null temperatures exist in this dataset */
+SELECT COUNT(*) FROM temperatures_by_country
+WHERE avg_temp IS NULL OR avg_temp_uncertainty IS NULL;
+
+/* top 10 countries with the highest average temperature? (do not include avg_temp = NULL) */
+SELECT DISTINCT country, 
+AVG(avg_temp) FROM temperatures_by_country
+WHERE avg_temp IS NOT NULL
+GROUP BY country
+ORDER BY AVG(avg_temp) DESC
+LIMIT 10;
