@@ -68,3 +68,51 @@ WHERE avg_temp IS NOT NULL
 GROUP BY country
 ORDER BY AVG(avg_temp) DESC
 LIMIT 10;
+
+/* Between the years 2000 and 2013, 
+what difference in average yearly 
+temperature between Djibouti and Greenland */
+with greenland as (
+select extract(year from dt) as years, avg(avg_temp) as gtemp
+
+from temperatures_by_country
+where extract(year from dt) between '2000' and '2013'
+   and country = 'Greenland'
+group by 1),
+
+djibouti as (
+select extract(year from dt) as years, avg(avg_temp) as dtemp
+
+from temperatures_by_country
+where extract(year from dt) between '2000' and '2013'
+   and country = 'Djibouti'
+group by 1)
+
+
+select
+years, 
+round((d.dtemp - gr.gtemp)::numeric, 2) as temp_difference
+
+from greenland gr
+left join djibouti d using (years)
+order by 1 desc
+
+/* Starting from the year 2000, 
+what is the relative change in overall climate year-over-year in Fahrenheit.
+relative change = ((x2 - x1) / x1) */
+SELECT
+    EXTRACT(YEAR FROM t1.dt) AS year,
+    ((AVG(t2.avg_temp) - AVG(t1.avg_temp)) / AVG(t1.avg_temp)) * 100 AS relative_change
+FROM
+    temperatures_by_country AS t1
+JOIN
+    temperatures_by_country AS t2
+ON
+    EXTRACT(YEAR FROM t1.dt) = EXTRACT(YEAR FROM t2.dt) - 1
+    AND t1.country = t2.country
+WHERE
+    EXTRACT(YEAR FROM t1.dt) >= 2000
+GROUP BY
+    EXTRACT(YEAR FROM t1.dt)
+ORDER BY
+    EXTRACT(YEAR FROM t1.dt);
